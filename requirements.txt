@@ -1,3 +1,7 @@
 streamlit
 pandas
 folium
+streamlit_folium
+streamlit_option_menu
+plotly.express
+plotly.graph_objects
