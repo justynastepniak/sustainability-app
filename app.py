@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 st.set_page_config(
     page_title="Sustainability and Happiness",
     layout="wide",  # Use wide layout
+    theme={
+    "base": "light"}
 )
 
 # CSS to reduce the default margins
