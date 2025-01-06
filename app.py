@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import folium
-from streamlit_folium import st_folium
 from streamlit_option_menu import option_menu
 import plotly.express as px
 import plotly.graph_objects as go
@@ -182,16 +180,17 @@ def create_scatterplot(df, y_value, x_value, income_group='all', y_title='', x_t
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",  # required
-        options=["Global Overview", "Case Study 1", "Case Study 2", "References"],  # required
+        options=["Home", "Global Overview", "Finland - Case Study", "Case Study 2", "References"],  # required
         default_index=0,  # optional
     )
 
 if selected == "Home":
-    st.title(f"Title {selected}")
+    st.title("How do sustainable environmental practices of countries correlate with the well-being and happiness of their citizens?")
+    st.text("Our project explores the link between a country’s sustainable practices and the happiness and mental wellbeing of its residents. As sustainability becomes a global priority, our goal is to explore specifics of these correlations.")
 
 if selected == "Global Overview":
     st.title(f"{selected} - are residents of sustainable countries happier?")
-    st.text("Our project explores the link between a country’s sustainable practices and the happiness and mental wellbeing of its residents. As sustainability becomes a global priority, our goal is to explore specifics of these correlations.")
+    st.text("To explore the link between sustainability and happiness, we will first examine global trends of reported happiness and sustainability measured by SDGI. We will also consider countries of varying income levels to take different economic contexts into consideration.")
     st.header("Global Happiness Score in 2023")
     st.text("The Happiness Score, also known as the Happiness Index, measures the well-being and life satisfaction of people across different countries. The results are based on self-assessments of happiness, well-being, sustainability, and resilience.")
     display_map(df, 'happiness_score', 'YlGn', 1.86, 7.8)
@@ -249,8 +248,8 @@ if selected == "Global Overview":
     st.text("While some trends and connections may be observed, involving more extensive studies over a longer period and possibly incorporating additional variables to better understand the complex relationships between sustainability and happiness, we need to investigate further.")
     st.text("Further analysis, including more comprehensive data and long-term studies, is essential to fully understand the complex interplay between sustainability and happiness.  While certain indicators like GDP, HDI, and SDGI show a positive correlation with happiness, the analysis of environmental factors such as recycling rates and biocapacity reveals more nuanced trends that vary by income level. In conclusion, more research is needed to draw firm conclusions about whether sustainability directly leads to higher happiness, considering the multitude of variables at play.")
 
-if selected == "Case Study 1":
-    st.title("Why is Finland the Happiest Country in the World?")
+if selected == "Finland - Case Study":
+    st.title("Why is Finland so happy? Exploring sustainability's role")
     st.markdown("""
     Finland consistently ranks as the happiest country in the world. This dashboard explores the 
     factors contributing to Finland's happiness, with a focus on sustainable practices.
