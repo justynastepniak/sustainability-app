@@ -1,6 +1,4 @@
 streamlit
 pandas
 altair
-plotly.express
-plotly.graph_objects
 streamlit_option_menu
