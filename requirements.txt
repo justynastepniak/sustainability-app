@@ -3,3 +3,4 @@ pandas
 altair
 streamlit_option_menu
 plotly
+statsmodels
