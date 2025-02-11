@@ -4,8 +4,6 @@ altair
 streamlit_option_menu
 plotly
 statsmodels
-matplotlib.pyplot
-json
 requests
 branca.colormap
 folium
