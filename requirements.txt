@@ -5,5 +5,5 @@ streamlit_option_menu
 plotly
 statsmodels
 requests
-branca.colormap
+branca
 folium
