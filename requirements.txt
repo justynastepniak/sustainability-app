@@ -4,3 +4,8 @@ altair
 streamlit_option_menu
 plotly
 statsmodels
+matplotlib
+json
+requests
+branca.colormap
+folium
