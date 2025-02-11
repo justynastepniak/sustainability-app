@@ -4,6 +4,10 @@ import altair as alt
 from streamlit_option_menu import option_menu
 import plotly.express as px
 import plotly.graph_objects as go
+import requests
+from branca.colormap import linear
+from branca.colormap import LinearColormap
+import folium
 
 # Set page configuration to widen layout
 st.set_page_config(
@@ -201,7 +205,7 @@ def create_scatterplot(df, y_value, x_value, income_group='all', y_title='', x_t
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",  # required
-        options=["Home", "Introduction / Global Overview", "Finland - Case Study", "Case Study 2", "References"],  # required
+        options=["Home", "Introduction / Global Overview", "Finland - Case Study", "Eco-anxiety", "References"],  # required
         default_index=0,  # optional
     )
 
@@ -825,6 +829,321 @@ if selected == "Finland - Case Study":
     
     """)
 
-if selected == "Case Study 2":
-    st.title(f"Title {selected}")
+if selected == "Eco-anxiety":
+    st.title(f"Sustaiability, wellbeing and ecoanxiety: a deeper dive in the topic.")   
+    st.markdown("""
+        Climate change isn’t just an environmental crisis, it’s an emotional one too. More and more people,
+        especially young individuals, are experiencing <span style='background-color: LemonChiffon;'><b>eco-anxiety</b>, a deep sense of worry, fear, and helplessness 
+        about the future of our planet.</span> The reality of climate change feels overwhelming, and many struggle 
+        with feelings of uncertainty and frustration, particularly when they see a lack of urgent action 
+        from governments and institutions.""",
+        unsafe_allow_html=True
+    )
+
+    # Title
+    st.write("### Distribution of health professionals' opinion on climate change impact")
+
+    st.markdown(
+        "In 2020, a global survey asked health professionals about the effects of climate change on mental health conditions "
+        "like anxiety and depression. The following bar chart summarizes their perspectives:"
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Data for the bar chart
+        data = pd.DataFrame({
+            'Opinions': ['More frequent or severe', 'Less frequent or severe', 'Will remain unchanged', "Don't know"],
+            'Percentage': [76.8, 2.2, 13.2, 7.9]
+        })
+
+        # Create Altair horizontal bar chart
+        chart = alt.Chart(data).mark_bar(color='lightblue').encode(
+            y=alt.Y('Opinions', sort=None, title='Opinions', axis=alt.Axis(labelLimit=300)),
+            x=alt.X('Percentage', title='Percentage (%)'),
+            tooltip=['Opinions', 'Percentage']
+        ).properties(
+            width=700,
+            height=400,
+            title=""
+        )
+
+        # Display the chart in Streamlit
+        st.altair_chart(chart, use_container_width=True)
+
+    with col2:
+        st.markdown(
+            """
+            <div style="margin: 150px 50px;">
+            <b>Conclusion:</b>
+            In 2020, medical professionals largely agreed that climate change related issues will make people's
+            mental conditions more frequent or severe.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
+    st.markdown("LINK TO THE DATA")
+
+    data_path = "share-believe-climate.csv"
+    data = pd.read_csv(data_path)
+
+    st.write("### Share of people who believe that climate change is a serious threat to the humanity")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown(
+            """
+            <div style="margin: 150px 50px;">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin mollis a ex sit amet finibus. Aenean pulvinar ipsum venenatis laoreet blandit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent in malesuada risus, id vulputate nulla. Donec sed ipsum a justo blandit tincidunt. Nullam et convallis diam. Morbi rutrum euismod dui at suscipit. In id dui lacus. In id lacus aliquam, ultrices libero id, volutpat arcu. Mauris in molestie nisi. Aenean volutpat erat ex, eu consectetur tortor commodo vel. Praesent massa nunc, aliquet id cursus eget, laoreet ut neque. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam viverra sem tortor, placerat suscipit felis blandit vel.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col2:
+    # Filter dataset for the most recent year
+        latest_year = data['Year'].max()
+        data_latest = data[data['Year'] == latest_year]
+
+        # Rename columns for better readability
+        data_latest = data_latest.rename(columns={
+            'Entity': 'Country',
+            'Code': 'Country Code',
+            'Believe climate change is a serious threat to humanity': 'Belief (%)'
+        })
+
+        # Choropleth map
+        fig = px.choropleth(
+            data_latest,
+            locations="Country Code",
+            color="Belief (%)",
+            hover_name="Country",
+            hover_data={
+                "Country Code": False
+            },
+            color_continuous_scale="Blues",
+            labels={"Belief (%)": "% Belief"}
+        )
+
+        # Customize hover text to match the desired format with smaller percentage font
+        fig.update_traces(
+            hovertemplate=
+                "<b>%{hovertext}</b><br>" +
+                "%{customdata[0]}<br>" +
+                "<span style='font-size:16px'><b>%{z:.1f}%</b></span><extra></extra>",
+            customdata=data_latest[["Year"]]
+        )
+
+        fig.update_geos(
+            showcoastlines=False,
+            showland=True, landcolor="gray",
+            showocean=False
+        )
+
+        # Update layout
+        fig.update_layout(
+            geo=dict(
+            showframe=False,                
+            showcoastlines=False,              
+            projection_type='equirectangular',  
+            showland=True,
+            landcolor='lightgray',
+            fitbounds="locations",
+            uirevision='constant'
+        ),
+            dragmode=False,  # Disable dragging and panning
+            margin=dict(t=0, b=0, l=0, r=0)
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("LINK TO THE DATA")
+
+    st.markdown("### Personal revelance")
+    st.markdown("""
+        Depending on the extent to which we are personally confronted with the effects of climate change, 
+        we can assess the importance of measures very differently. Those who experience the impacts first-hand often feel a 
+        greater sense of urgency to act. This personal connection can influence how we priorities the issue.
+
+        The graph visually represents the percentage of people in various European countries who perceive 
+        climate change as the biggest problem, with higher percentages shown in warmer colors and lower percentages in cooler colors.
+
+        The graphic illustrates the varying levels of concern about climate change across European countries, 
+        with a color-coded map and a bar chart showing the level of concern on a scale of 1 to 10.
+        """)
+    
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        # Streamlit app title
+        st.markdown("### Perception of Climate Change as the Biggest Problem in Europe")
+
+        # Updated data from the image
+        data = {
+            "Belgium": 49, "Bulgaria": 22, "Czech Republic": 27, "Denmark": 74, "Germany": 55,
+            "Estonia": 29, "Ireland": 49, "Greece": 44, "Spain": 48, "France": 52,
+            "Croatia": 42, "Italy": 45, "Cyprus": 39, "Latvia": 22, "Lithuania": 37,
+            "Luxembourg": 57, "Hungary": 33, "Malta": 49, "Netherlands": 66, "Austria": 48,
+            "Poland": 28, "Portugal": 43, "Romania": 31, "Slovenia": 42, "Slovakia": 26,
+            "Finland": 55, "Sweden": 73
+        }
+
+        # Convert data to DataFrame
+        df = pd.DataFrame(list(data.items()), columns=["Country", "Percentage"])
+
+        # Country name mapping to match GeoJSON format
+        country_name_mapping = {
+            "Czech Republic": "Czechia"
+        }
+        df["Country"] = df["Country"].replace(country_name_mapping)
+
+        # Fetch GeoJSON data
+        GEOJSON_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+        geojson_data = requests.get(GEOJSON_URL).json()
+
+        # Create a folium map with a tileset that shows English names
+        m = folium.Map(location=[54.5260, 15.2551], zoom_start=4, tiles="CartoDB Positron")
+
+        # Create a color scale
+        colormap = linear.RdYlGn_11.scale(df["Percentage"].min(), df["Percentage"].max())
+
+        # Add choropleth layer to shade entire countries
+        choropleth = folium.Choropleth(
+            geo_data=geojson_data,
+            name="choropleth",
+            data=df,
+            columns=["Country", "Percentage"],
+            key_on="feature.properties.name",
+            fill_color="RdYlGn",
+            fill_opacity=0.7,
+            line_opacity=0.2,
+            legend_name="Perception (%)"
+        ).add_to(m)
+
+        # Merge data into GeoJSON for better tooltips
+        for feature in geojson_data["features"]:
+            country_name = feature["properties"]["name"]
+            feature["properties"]["Percentage"] = data.get(country_name, "No Data")
+
+        folium.GeoJson(
+            geojson_data,
+            tooltip=folium.GeoJsonTooltip(
+                fields=["name", "Percentage"],
+                aliases=["Country: ", "Percentage: "],
+                localize=True
+            )
+        ).add_to(m)
+
+        # Display the map in Streamlit
+        st.components.v1.html(m._repr_html_(), height=600)
+
+        # Add a table to show the percentage distribution
+        st.subheader("Percentage Distribution by Country")
+        st.dataframe(df.sort_values(by="Percentage", ascending=False))
+
+        # Add a bar chart for better visualization
+        st.subheader("Bar Chart of Percentage Distribution")
+        st.bar_chart(df.set_index("Country"))
+
+    with col2:
+
+        # Streamlit app title
+        st.markdown("### Perception of Climate Change in Europe")
+
+        # Updated data
+        climate_concern = {
+            'Germany': 8, 'France': 7, 'Spain': 6, 'Italy': 7, 'United Kingdom': 6,
+            'Poland': 5, 'Romania': 4, 'Netherlands': 7, 'Belgium': 6,
+            'Greece': 8, 'Portugal': 7, 'Sweden': 6, 'Hungary': 5,
+            'Austria': 6, 'Switzerland': 7, 'Denmark': 7, 'Finland': 6,
+            'Norway': 6, 'Ireland': 6, 'Croatia': 5, 'Lithuania': 7, 'Slovakia': 8, 
+            'Slovenia': 8, 'Bulgaria': 9, 'Liechtenstein': 5, 'Latvia': 10, 
+            'Cyprus': 3, 'Estonia': 10,
+        }
+
+        # Convert data to DataFrame
+        df = pd.DataFrame(list(climate_concern.items()), columns=["Country", "Concern Level"])
+
+        # Define a slightly lighter color scale
+        color_scale = LinearColormap(["lightgreen", "lightyellow", "lightsalmon", "lightcoral"], vmin=min(climate_concern.values()), vmax=max(climate_concern.values()))
+
+        def custom_colormap(value):
+            return color_scale(value)
+
+        # Create a folium map with English labels
+        m = folium.Map(location=[54.5260, 15.2551], zoom_start=4, tiles="CartoDB Positron")
+
+        # Load GeoJSON data for world country borders
+        GEOJSON_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+        geojson_data = requests.get(GEOJSON_URL).json()
+
+        # Apply custom colors using folium.GeoJson
+        def style_function(feature):
+            country_name = feature["properties"]["name"]
+            concern_value = climate_concern.get(country_name, None)
+            if concern_value is not None:
+                return {
+                    "fillColor": custom_colormap(concern_value),
+                    "fillOpacity": 0.7,
+                    "color": "black",
+                    "weight": 0.5  # Thinner borders
+                }
+            else:
+                return {"fillColor": "#3a3a3a", "fillOpacity": 0.85, "color": "black", "weight": 0.3}  # Shade out other countries
+
+        # Apply tooltips with country name and concern level
+        def tooltip_function(feature):
+            country_name = feature["properties"]["name"]
+            concern_value = climate_concern.get(country_name, None)
+            if concern_value is not None:
+                return f"<div style='text-align: center;'><b style='font-size:14px;'>{country_name}</b><br><span style='font-size:16px;'>{concern_value}</span></div>"
+            return ""
+
+        # Add the colored geojson layer with tooltips
+        gj = folium.GeoJson(
+            geojson_data,
+            name="Climate Concern",
+            style_function=style_function,
+            tooltip=folium.GeoJsonTooltip(
+                fields=["name"],
+                aliases=[""],
+                labels=False,
+                sticky=True,
+                localize=True,
+                style="background-color: white; color: black; font-family: Arial; font-size: 14px;",
+                html=True
+            )
+        )
+
+        # Attach tooltips to each feature
+        for feature in gj.data["features"]:
+            country_name = feature["properties"]["name"]
+            if country_name in climate_concern:
+                feature["properties"]["tooltip"] = tooltip_function(feature)
+
+        gj.add_to(m)
+
+        # Add color bar
+        color_scale.caption = "Climate Concern Level (1-10)"
+        color_scale.add_to(m)
+
+        # Display the map in Streamlit
+        st.components.v1.html(m._repr_html_(), height=600)
+
+        # Add a bar chart for percentage distribution
+        st.subheader("Climate Concern Level by Country")
+        fig = px.bar(
+            df,
+            x="Country",
+            y="Concern Level",
+            labels={"Concern Level": "Concern Level (1-10)", "Country": "Country"},
+            title="Climate Concern Level Distribution",
+            text="Concern Level",
+            color="Concern Level",
+            color_continuous_scale=px.colors.sequential.Viridis,
+        )
+        fig.update_traces(textposition="outside")
+        st.plotly_chart(fig, use_container_width=True)
