@@ -1,9 +1,5 @@
 streamlit
 pandas
 altair
-streamlit_option_menu
-plotly
-statsmodels
-requests
-branca
-folium
+plotly.express
+plotly.graph_objects

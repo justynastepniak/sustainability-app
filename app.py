@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import streamlit as st
 import pandas as pd
 import altair as alt
@@ -8,6 +9,18 @@ import requests
 from branca.colormap import linear
 from branca.colormap import LinearColormap
 import folium
+from streamlit_folium import st_folium
+import pycountry
+import time
+import os
+import streamlit.runtime.scriptrunner.script_runner as script_runner
+import scipy.stats as stats
+from PIL import Image
+import numpy as np
+import statsmodels.api as sm
+import seaborn as sns
+import tempfile
+
 
 # Set page configuration to widen layout
 st.set_page_config(
@@ -20,9 +33,10 @@ st.markdown(
     """
     <style>
         .main .block-container {
+            width: 70%;
             padding-top: 1rem;
-            padding-right: 1rem;
-            padding-left: 1rem;
+            padding-right: 2rem;
+            padding-left: 2rem;
             padding-bottom: 1rem;
         }
     </style>
@@ -205,7 +219,7 @@ def create_scatterplot(df, y_value, x_value, income_group='all', y_title='', x_t
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",  # required
-        options=["Home", "Introduction / Global Overview", "Finland - Case Study", "Eco-anxiety", "References"],  # required
+        options=["Home", "Global Overview", "Finland - Case Study", "Eco-anxiety", "Leuphana Survey", "References"], 
         default_index=0,  # optional
     )
 
@@ -215,7 +229,7 @@ if selected == "Home":
     sustainable practices and the happiness and mental wellbeing of its residents. As sustainability becomes a 
     global priority, our goal is to explore specifics of these correlations.""")
 
-if selected == "Introduction / Global Overview":
+if selected == "Global Overview":
     st.title(f"{selected} - are residents of sustainable countries happier?")
     st.markdown("""To explore the link between **sustainability and happiness**, we will first examine global trends 
     of reported happiness and sustainability measured by SDGI. We will also consider countries of <span style='background-color: LemonChiffon;'>varying income 
@@ -830,7 +844,7 @@ if selected == "Finland - Case Study":
     """)
 
 if selected == "Eco-anxiety":
-    st.title(f"Sustaiability, wellbeing and ecoanxiety: a deeper dive in the topic.")   
+    st.title(f"Sustainability, wellbeing and eco-anxiety: a deeper dive in the topic.")   
     st.markdown("""
         Climate change isn’t just an environmental crisis, it’s an emotional one too. More and more people,
         especially young individuals, are experiencing <span style='background-color: LemonChiffon;'><b>eco-anxiety</b>, a deep sense of worry, fear, and helplessness 
@@ -841,7 +855,7 @@ if selected == "Eco-anxiety":
     )
 
     # Title
-    st.write("### Distribution of health professionals' opinion on climate change impact")
+    st.write("## Distribution of health professionals' opinion on climate change impact")
 
     st.markdown(
         "In 2020, a global survey asked health professionals about the effects of climate change on mental health conditions "
@@ -874,159 +888,73 @@ if selected == "Eco-anxiety":
     with col2:
         st.markdown(
             """
-            <div style="margin: 150px 50px;">
-            <b>Conclusion:</b>
+            <div style="margin: 100px 50px; font-size: 23px;">
             In 2020, medical professionals largely agreed that climate change related issues will make people's
-            mental conditions more frequent or severe.
+            mental conditions <b>more frequent or severe in the future.</b>
             </div>
             """,
             unsafe_allow_html=True
         )
     
-    st.markdown("LINK TO THE DATA")
-
-    data_path = "share-believe-climate.csv"
-    data = pd.read_csv(data_path)
-
-    st.write("### Share of people who believe that climate change is a serious threat to the humanity")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown(
-            """
-            <div style="margin: 150px 50px;">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin mollis a ex sit amet finibus. Aenean pulvinar ipsum venenatis laoreet blandit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent in malesuada risus, id vulputate nulla. Donec sed ipsum a justo blandit tincidunt. Nullam et convallis diam. Morbi rutrum euismod dui at suscipit. In id dui lacus. In id lacus aliquam, ultrices libero id, volutpat arcu. Mauris in molestie nisi. Aenean volutpat erat ex, eu consectetur tortor commodo vel. Praesent massa nunc, aliquet id cursus eget, laoreet ut neque. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam viverra sem tortor, placerat suscipit felis blandit vel.
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with col2:
-    # Filter dataset for the most recent year
-        latest_year = data['Year'].max()
-        data_latest = data[data['Year'] == latest_year]
-
-        # Rename columns for better readability
-        data_latest = data_latest.rename(columns={
-            'Entity': 'Country',
-            'Code': 'Country Code',
-            'Believe climate change is a serious threat to humanity': 'Belief (%)'
-        })
-
-        # Choropleth map
-        fig = px.choropleth(
-            data_latest,
-            locations="Country Code",
-            color="Belief (%)",
-            hover_name="Country",
-            hover_data={
-                "Country Code": False
-            },
-            color_continuous_scale="Blues",
-            labels={"Belief (%)": "% Belief"}
-        )
-
-        # Customize hover text to match the desired format with smaller percentage font
-        fig.update_traces(
-            hovertemplate=
-                "<b>%{hovertext}</b><br>" +
-                "%{customdata[0]}<br>" +
-                "<span style='font-size:16px'><b>%{z:.1f}%</b></span><extra></extra>",
-            customdata=data_latest[["Year"]]
-        )
-
-        fig.update_geos(
-            showcoastlines=False,
-            showland=True, landcolor="gray",
-            showocean=False
-        )
-
-        # Update layout
-        fig.update_layout(
-            geo=dict(
-            showframe=False,                
-            showcoastlines=False,              
-            projection_type='equirectangular',  
-            showland=True,
-            landcolor='lightgray',
-            fitbounds="locations",
-            uirevision='constant'
-        ),
-            dragmode=False,  # Disable dragging and panning
-            margin=dict(t=0, b=0, l=0, r=0)
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown("LINK TO THE DATA")
-
-    st.markdown("### Personal revelance")
+    st.markdown("## Personal revelance")
     st.markdown("""
         Depending on the extent to which we are personally confronted with the effects of climate change, 
         we can assess the importance of measures very differently. Those who experience the impacts first-hand often feel a 
-        greater sense of urgency to act. This personal connection can influence how we priorities the issue.
-
-        The graph visually represents the percentage of people in various European countries who perceive 
-        climate change as the biggest problem, with higher percentages shown in warmer colors and lower percentages in cooler colors.
-
-        The graphic illustrates the varying levels of concern about climate change across European countries, 
-        with a color-coded map and a bar chart showing the level of concern on a scale of 1 to 10.
+        greater sense of urgency to act. This personal connection can influence how we prioritize the issue.
         """)
     
     col1, col2 = st.columns(2)
 
     with col1:
 
-        # Streamlit app title
-        st.markdown("### Perception of Climate Change as the Biggest Problem in Europe")
+        st.markdown("### People who are personally exposed")
 
         # Updated data from the image
-        data = {
-            "Belgium": 49, "Bulgaria": 22, "Czech Republic": 27, "Denmark": 74, "Germany": 55,
-            "Estonia": 29, "Ireland": 49, "Greece": 44, "Spain": 48, "France": 52,
-            "Croatia": 42, "Italy": 45, "Cyprus": 39, "Latvia": 22, "Lithuania": 37,
-            "Luxembourg": 57, "Hungary": 33, "Malta": 49, "Netherlands": 66, "Austria": 48,
-            "Poland": 28, "Portugal": 43, "Romania": 31, "Slovenia": 42, "Slovakia": 26,
-            "Finland": 55, "Sweden": 73
+        exposure_data = {
+            "Belgium": 30, "Bulgaria": 48, "Czech Republic": 24, "Denmark": 12, "Germany": 18,
+            "Estonia": 18, "Ireland": 28, "Greece": 59, "Spain": 48, "France": 33,
+            "Croatia": 52, "Italy": 43, "Cyprus": 57, "Latvia": 26, "Lithuania": 22,
+            "Luxembourg": 26, "Hungary": 62, "Malta": 63, "Netherlands": 26, "Austria": 28,
+            "Poland": 56, "Portugal": 64, "Romania": 45, "Slovenia": 32, "Slovakia": 49,
+            "Finland": 9, "Sweden": 21
         }
 
         # Convert data to DataFrame
-        df = pd.DataFrame(list(data.items()), columns=["Country", "Percentage"])
+        ex_df = pd.DataFrame(list(exposure_data.items()), columns=["Country", "Percentage"])
 
         # Country name mapping to match GeoJSON format
         country_name_mapping = {
             "Czech Republic": "Czechia"
         }
-        df["Country"] = df["Country"].replace(country_name_mapping)
+        ex_df["Country"] = ex_df["Country"].replace(country_name_mapping)
 
         # Fetch GeoJSON data
         GEOJSON_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
         geojson_data = requests.get(GEOJSON_URL).json()
 
         # Create a folium map with a tileset that shows English names
-        m = folium.Map(location=[54.5260, 15.2551], zoom_start=4, tiles="CartoDB Positron")
+        m = folium.Map(location=[54.5260, 15.2551], zoom_start=3, tiles="CartoDB Positron")
 
         # Create a color scale
-        colormap = linear.RdYlGn_11.scale(df["Percentage"].min(), df["Percentage"].max())
+        colormap = linear.RdYlGn_11.scale(ex_df["Percentage"].min(), ex_df["Percentage"].max())
 
         # Add choropleth layer to shade entire countries
         choropleth = folium.Choropleth(
             geo_data=geojson_data,
             name="choropleth",
-            data=df,
+            data=ex_df,
             columns=["Country", "Percentage"],
             key_on="feature.properties.name",
             fill_color="RdYlGn",
             fill_opacity=0.7,
             line_opacity=0.2,
-            legend_name="Perception (%)"
+            legend_name="Exposure (%)"
         ).add_to(m)
 
         # Merge data into GeoJSON for better tooltips
         for feature in geojson_data["features"]:
             country_name = feature["properties"]["name"]
-            feature["properties"]["Percentage"] = data.get(country_name, "No Data")
+            feature["properties"]["Percentage"] = exposure_data.get(country_name, "No Data")
 
         folium.GeoJson(
             geojson_data,
@@ -1040,110 +968,835 @@ if selected == "Eco-anxiety":
         # Display the map in Streamlit
         st.components.v1.html(m._repr_html_(), height=600)
 
-        # Add a table to show the percentage distribution
-        st.subheader("Percentage Distribution by Country")
-        st.dataframe(df.sort_values(by="Percentage", ascending=False))
-
-        # Add a bar chart for better visualization
-        st.subheader("Bar Chart of Percentage Distribution")
-        st.bar_chart(df.set_index("Country"))
-
     with col2:
 
-        # Streamlit app title
-        st.markdown("### Perception of Climate Change in Europe")
+        st.markdown("### People who take climate change seriously")
+        # Read data
+        data_path = "share-believe-climate.csv"
+        data = pd.read_csv(data_path)
 
-        # Updated data
-        climate_concern = {
-            'Germany': 8, 'France': 7, 'Spain': 6, 'Italy': 7, 'United Kingdom': 6,
-            'Poland': 5, 'Romania': 4, 'Netherlands': 7, 'Belgium': 6,
-            'Greece': 8, 'Portugal': 7, 'Sweden': 6, 'Hungary': 5,
-            'Austria': 6, 'Switzerland': 7, 'Denmark': 7, 'Finland': 6,
-            'Norway': 6, 'Ireland': 6, 'Croatia': 5, 'Lithuania': 7, 'Slovakia': 8, 
-            'Slovenia': 8, 'Bulgaria': 9, 'Liechtenstein': 5, 'Latvia': 10, 
-            'Cyprus': 3, 'Estonia': 10,
-        }
+        # Filter for the most recent year
+        latest_year = data['Year'].max()
+        data_latest = data[data['Year'] == latest_year]
 
-        # Convert data to DataFrame
-        df = pd.DataFrame(list(climate_concern.items()), columns=["Country", "Concern Level"])
+        # Rename columns for better readability
+        data_latest = data_latest.rename(columns={
+            'Entity': 'Country',
+            'Code': 'Country Code',
+            'Believe climate change is a serious threat to humanity': 'Belief (%)'
+        })
 
-        # Define a slightly lighter color scale
-        color_scale = LinearColormap(["lightgreen", "lightyellow", "lightsalmon", "lightcoral"], vmin=min(climate_concern.values()), vmax=max(climate_concern.values()))
+        # Create a dictionary for the belief data
+        belief_data = dict(zip(data_latest['Country'], data_latest['Belief (%)']))
 
-        def custom_colormap(value):
-            return color_scale(value)
-
-        # Create a folium map with English labels
-        m = folium.Map(location=[54.5260, 15.2551], zoom_start=4, tiles="CartoDB Positron")
-
-        # Load GeoJSON data for world country borders
+        # Fetch GeoJSON data
         GEOJSON_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
         geojson_data = requests.get(GEOJSON_URL).json()
 
-        # Apply custom colors using folium.GeoJson
-        def style_function(feature):
-            country_name = feature["properties"]["name"]
-            concern_value = climate_concern.get(country_name, None)
-            if concern_value is not None:
-                return {
-                    "fillColor": custom_colormap(concern_value),
-                    "fillOpacity": 0.7,
-                    "color": "black",
-                    "weight": 0.5  # Thinner borders
-                }
-            else:
-                return {"fillColor": "#3a3a3a", "fillOpacity": 0.85, "color": "black", "weight": 0.3}  # Shade out other countries
+        # Create a folium map with a tileset that shows English names
+        m = folium.Map(location=[54.5260, 15.2551], zoom_start=3, tiles="CartoDB Positron")
 
-        # Apply tooltips with country name and concern level
-        def tooltip_function(feature):
-            country_name = feature["properties"]["name"]
-            concern_value = climate_concern.get(country_name, None)
-            if concern_value is not None:
-                return f"<div style='text-align: center;'><b style='font-size:14px;'>{country_name}</b><br><span style='font-size:16px;'>{concern_value}</span></div>"
-            return ""
+        # Create a color scale
+        colormap = linear.Blues_09.scale(min(belief_data.values()), max(belief_data.values()))
 
-        # Add the colored geojson layer with tooltips
-        gj = folium.GeoJson(
+        # Add choropleth layer to shade entire countries
+        choropleth = folium.Choropleth(
+            geo_data=geojson_data,
+            name="choropleth",
+            data=data_latest,
+            columns=["Country", "Belief (%)"],
+            key_on="feature.properties.name",
+            fill_color="RdYlGn",
+            fill_opacity=0.7,
+            line_opacity=0.2,
+            legend_name="% Belief in Climate Change as a Serious Threat"
+        ).add_to(m)
+
+        # Merge data into GeoJSON for better tooltips
+        for feature in geojson_data["features"]:
+            country_name = feature["properties"]["name"]
+            feature["properties"]["Belief (%)"] = belief_data.get(country_name, "No Data")
+
+        # Add tooltips to show country name and belief percentage
+        folium.GeoJson(
             geojson_data,
-            name="Climate Concern",
-            style_function=style_function,
             tooltip=folium.GeoJsonTooltip(
-                fields=["name"],
-                aliases=[""],
-                labels=False,
-                sticky=True,
-                localize=True,
-                style="background-color: white; color: black; font-family: Arial; font-size: 14px;",
-                html=True
+                fields=["name", "Belief (%)"],
+                aliases=["Country: ", "Belief (%): "],
+                localize=True
             )
-        )
-
-        # Attach tooltips to each feature
-        for feature in gj.data["features"]:
-            country_name = feature["properties"]["name"]
-            if country_name in climate_concern:
-                feature["properties"]["tooltip"] = tooltip_function(feature)
-
-        gj.add_to(m)
-
-        # Add color bar
-        color_scale.caption = "Climate Concern Level (1-10)"
-        color_scale.add_to(m)
+        ).add_to(m)
 
         # Display the map in Streamlit
         st.components.v1.html(m._repr_html_(), height=600)
 
-        # Add a bar chart for percentage distribution
-        st.subheader("Climate Concern Level by Country")
-        fig = px.bar(
-            df,
-            x="Country",
-            y="Concern Level",
-            labels={"Concern Level": "Concern Level (1-10)", "Country": "Country"},
-            title="Climate Concern Level Distribution",
-            text="Concern Level",
-            color="Concern Level",
-            color_continuous_scale=px.colors.sequential.Viridis,
+    st.header("Which sustainable solutions are most relevant for each European country? 🌍")
+    st.subheader("European Sustainability Preferences - 2009 Eurobarometer")
+
+    # Upload Excel file
+    file_path = "Q8.xlsx"
+    df_euro = pd.read_excel(file_path)
+
+    # Convert from ISO 2 to ISO 3
+    def convert_iso2_to_iso3(iso2_code):
+        country = pycountry.countries.get(alpha_2=iso2_code)
+        return country.alpha_3 if country else None
+
+    df_euro["Country_code"] = df_euro["Country_code"].apply(convert_iso2_to_iso3)
+
+    # Country name mapping
+    country_mapping = {c.alpha_3: c.name for c in pycountry.countries if c.alpha_3}
+
+    # Color map for preferences
+    color_map = {
+        "Buying products produced by eco friendly production": "#F07167",
+        "Buying energy efficient home appliances": "#0081A7",
+        "Minimizing waste and recycling": "#00AFB9",
+        "Travelling less and adopting sustainable modes of transport": "#FED9B7",
+        "DK/NA": "#FFA500",
+    }
+
+    #section main globe
+    fig_map = px.choropleth(
+        df_euro,
+        locations="Country_code",
+        locationmode="ISO-3",
+        color="top_preference",
+        hover_name="Country_code",
+        hover_data=["top_preference"],
+        color_discrete_map=color_map,
+        projection="orthographic",
+    )
+
+    fig_map.update_layout(
+        geo=dict(
+            showcoastlines=True,
+            showland=True,
+            landcolor="lightgray",
+            coastlinecolor="lightgrey",
+            projection_type="orthographic",
+            center={"lat": 55, "lon": 10},
+            lonaxis_range=[-25, 45],
+            lataxis_range=[35, 70],
+            showlakes=True,
+            lakecolor="darkgrey",
+        ),
+        margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    )
+
+    st.plotly_chart(fig_map, use_container_width=True)
+
+    # --- COUNTRY-SPECIFIC DETAILS (TWO COLUMNS BELOW) ---
+    st.subheader(" Get Country-Specific Insights! 🔎")
+    selected_country_code = st.selectbox("Select a country:", df_euro["Country_code"].dropna().unique())
+
+    selected_data = df_euro[df_euro["Country_code"] == selected_country_code]
+    if selected_data.empty:
+        st.warning("No data available for this country.")
+    else:
+        selected_data = selected_data.iloc[0]
+        country_name = country_mapping.get(selected_country_code, "Unknown Country")
+        
+        # Fetch flag from RestCountries API
+        flag_url = None
+        flag_api_url = f"https://restcountries.com/v3.1/alpha/{selected_country_code.lower()}"
+        response = requests.get(flag_api_url).json()
+        if response and isinstance(response, list) and "flags" in response[0]:
+            flag_url = response[0]["flags"]["png"]
+        
+        col1, col2 = st.columns([1, 1])  # Two equal columns
+        
+        with col1:
+            with col1:
+                explanation_text = selected_data.get("explanation", "No explanation available.")
+            
+            st.markdown(
+                f"""
+                <div style="background-color: #f5f5f5; padding: 25px; border-radius: 15px; text-align: center;
+                    box-shadow: 3px 3px 12px rgba(0,0,0,0.1);">
+                    <h2 style="display: inline-block; margin-right: 10px;">{country_name}</h2>
+                    {'<img src=' + flag_url + ' width=80 style="vertical-align: middle;">' if flag_url else '🚩 Flag not available'}
+                    <p style="margin-top: 10px; font-size: 16px;">{explanation_text}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        
+        with col2:
+            # Data preparation
+            preference_data = pd.DataFrame({
+                "Preference": [selected_data["top_preference"], selected_data["top2_preference"]],
+                "Percentage": [selected_data["rate_toppreference"], selected_data["ratetop2_preference"]]
+            })
+
+            # Display the top preference and percentage using st.metric
+            st.metric(label="Top Sustainability Preference", value=preference_data['Preference'][0], delta=f"{preference_data['Percentage'][0]}%")
+
+            # Display the second preference and percentage using st.metric
+            st.metric(label="Second Sustainability Preference", value=preference_data['Preference'][1], delta=f"{preference_data['Percentage'][1]}%")
+
+
+if selected == "Leuphana Survey":
+
+    st.title("What about our context?")
+    st.write(
+    "To gain insights into how sustainable practices impact the well-being of students at Leuphana University, "
+    "we conducted a survey focused on environmental awareness and lifestyle choices. This study explores "
+    "students' perceptions, behaviors, and attitudes toward sustainability, alongside its potential effects "
+    "on their mental and physical well-being. The data provides insights into how sustainability integrates "
+    "into students' daily lives and contributes to their overall quality of life."
+)   
+    st.subheader("Statistics of Leuphana Students 2024/25 (N=303)")
+    st.markdown(
+        "<p style='font-size:18px; color:gray;'>This dashboard explores data gathered around campus and correctly weighted to compensate for not fully represented groups.</p>",
+        unsafe_allow_html=True
+    )
+
+    # Load Data
+    path = 'Formulary_Nature.xlsx'
+    main_df = pd.read_excel(path, sheet_name=0)
+    main_df2= pd.read_excel(path, sheet_name=0)
+
+    # Optimize gender label replacement
+    main_df['gender'] = main_df['gender'].map({'Weiblich/Female': 'Female', 'Männlich/Male': 'Male'}).fillna(main_df['gender'])
+
+    # Load images
+    image1 = Image.open("agedist.png")
+    image2 = Image.open("genderdist.png")
+
+    st.image(image1, caption="Age distribution across our survey", use_container_width=True)
+
+    st.subheader("Gender distribution across our survey")
+    st.image(image2, use_container_width=True)
+
+    # Section: General Leuphana Metrics
+    st.title("Which metrics did we take into account?")
+    st.subheader("Can a closer relationship to nature influence the frequency of sustainable practices?")
+    st.markdown(
+        "<p style='font-size:18px; color:gray;'>We analyzed various factors, including accessibility to nature, frequency of activities in nature, and engagement in sustainable practices.</p>",
+        unsafe_allow_html=True
+    )
+    st.write("We decided to investigate the median levels of accessibility to nature, frequency of activities played in natural environments, as well as frequency of sustainable practices. The results are shown below.")
+
+    # Dropdown menu for group selection
+    group = st.selectbox("Choose the group to visualize:", ["Female", "Male", "Overall"], index=0)
+
+    # Apply filtering
+    filtered_df = main_df if group == "Overall" else main_df[main_df['gender'] == group]
+
+    # Compute medians
+    practices_median = filtered_df['sustainable_practices'].median()
+    proximity_median = filtered_df['natural_acc'].median()
+    activities_median = filtered_df['activities_nature'].median()
+
+    # Set color dynamically
+    color_map = {"Female": "#9c3368", "Male": "#0e7669", "Overall": "#bbbbbb"}
+    box_color = color_map.get(group, "#bbbbbb")  # Default to gray
+
+    # Create layout for median values
+    col1_median, col2_median, col3_median = st.columns(3)
+
+    # CSS styling for boxes
+    box_style = f"""
+        background-color: {box_color};
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        width: 100%;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    """
+
+    # Display the metric boxes
+    with col1_median:
+        st.markdown(f'<div style="{box_style}">'
+                    f'<h2>{proximity_median}/7.0</h2><h5>Accessibility of Natural Spaces</h5></div>', 
+                    unsafe_allow_html=True)
+
+    with col2_median:
+        st.markdown(f'<div style="{box_style}">'
+                    f'<h2>{activities_median}/7.0</h2><h5>Frequency of Activities in Nature</h5></div>', 
+                    unsafe_allow_html=True)
+
+    with col3_median:
+        st.markdown(f'<div style="{box_style}">'
+                    f'<h2>{practices_median}/7.0</h2><h5>Frequency of Sustainable Practices</h5></div>', 
+                    unsafe_allow_html=True)
+
+
+    #SCATTERPLOT SECTION | NATURE RELATIONSHIP VS SUSTAINABLE PRACTICES
+    #Include scatterplot of frequency of activities in the nature and sustainable practices. 
+    st.header("")
+    st.header("Is there a correlation between one's relationship to nature and the frequency of sustainable practices?")
+    st.markdown(
+        "<p style='font-size:18px; color:gray;'>Is it possible that a closer relationship with nature leads individuals to act more sustainably?</p>",
+        unsafe_allow_html=True
+    )
+
+    param1, param2 = main_df2['activities_nature'], main_df2['sustainable_practices']
+    valid_data = main_df2[[param1.name, param2.name]].replace([np.inf, -np.inf], np.nan).dropna()
+    param1, param2 = valid_data[param1.name], valid_data[param2.name]
+
+    # Calculate Pearson correlation
+    correlation, p_value = stats.pearsonr(param1, param2)
+
+    # Scatterplot with Regression Line
+    fig, ax = plt.subplots()
+
+    sns.scatterplot(x=param1, y=param2, ax=ax, color='#0b8b6a', alpha=0.5)
+    sns.regplot(x=param1, y=param2, ax=ax, scatter=False, color='red')
+    sns.kdeplot(x=param1, y=param2, ax=ax, cmap="Greens", fill=True, alpha=0.3)
+
+    ax.set_xlabel('Frequency of Activities in Nature')
+    ax.set_ylabel('Frequency of Sustainable Practices')
+    ax.set_title(f"Correlation: {correlation:.2f}")
+    ax.grid(False)  # Remove grid
+
+    col1, col2 = st.columns(2)
+    with col1:
+
+        st.pyplot(fig)
+
+    with col2:
+        # Display correlation info
+        st.write(f"**Pearson Correlation Coefficient:** {correlation:.2f}")
+        st.write(f"**P-value:** {p_value:.4f}")
+        st.write("---")
+        st.markdown(
+            """
+            <div style="margin: 50px 50px; font-size: 23px;">
+            Among Leuphana students, there seems to be slight but not statistically significant correlation between being practicing sustainability and activities in nature.
+            </div>
+            """,
+            unsafe_allow_html=True
         )
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(fig, use_container_width=True)
+
+    #SECOND SCATTERPLOT | ACCESSIBILITY VS SUSTAINABLE PRACTICES
+    # Second Scatterplot: Accessibility to Nature vs. Sustainable Practices
+    st.header("Can a closer geographical positioning to nature influence the frequency of sustainable practices?")
+    st.write("The hypothesis our team developed across the months was that one's proximity to nature would facilitate awareness or caring towards natural spaces and practices. We decided to inspect whether there is a practical correlation between the geographical proximity and the frequency of these practices.")
+
+    param3, param2 = main_df2['natural_acc'], main_df2['sustainable_practices']
+    valid_data = main_df2[[param3.name, param2.name]].replace([np.inf, -np.inf], np.nan).dropna()
+    param3, param2 = valid_data[param3.name], valid_data[param2.name]
+
+    # Calculate Pearson correlation
+    correlation, p_value = stats.pearsonr(param3, param2)
+
+    # Scatterplot with Regression Line
+    fig, ax = plt.subplots()
+
+    sns.scatterplot(x=param3, y=param2, ax=ax, color='#0b8b6a', alpha=0.5)
+    sns.regplot(x=param3, y=param2, ax=ax, scatter=False, color='red')
+    sns.kdeplot(x=param3, y=param2, ax=ax, cmap="Greens", fill=True, alpha=0.3)
+
+    ax.set_xlabel('Accessibility to Natural Spaces')
+    ax.set_ylabel('Frequency of Sustainable Practices')
+    ax.set_title(f"Correlation: {correlation:.2f}")
+    ax.grid(False)  # Remove grid
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.pyplot(fig)
+
+    with col2:
+        # Display correlation info
+        st.write(f"**Pearson Correlation Coefficient:** {correlation:.2f}")
+        st.write(f"**P-value:** {p_value:.4f}")
+        st.write("---")
+        st.markdown(
+            """
+            <div style="margin: 50px 50px; font-size: 23px;">
+            Among Leuphana students, there seems to be no correlation between accessibility to natural spaces and frequency of sustainable practices.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    #OTHER SECTIONNNNN ABOUT ECO-ANXIETY
+    st.header("Eco-anxiety levels by gender")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        # Clean gender labels
+        main_df['gender'] = main_df['gender'].replace({
+            'Weiblich/Female': 'Female',
+            'Männlich/Male': 'Male'
+        })
+
+        # Add an "Overall" category (without excluding it from density calculation)
+        main_df['gender'] = main_df['gender'].fillna("Unknown")
+        main_df = pd.concat([main_df, pd.DataFrame({"gender": ["Overall"] * len(main_df), "ecoanxiety_status": main_df["ecoanxiety_status"]})])
+
+        # Define color scale for genders using custom hex colors
+        color_scale = alt.Scale(domain=['Female', 'Male', 'Overall'], range=['#9c3368', '#0e7669', 'gray'])
+
+        # Generate a base Altair chart for the ridgeline effect
+        base = alt.Chart(main_df).transform_density(
+            'ecoanxiety_status',
+            as_=['ecoanxiety_status', 'density'],
+            groupby=['gender']
+        ).mark_area(
+            opacity=0.6,
+            line={'color': 'black'}
+        ).encode(
+            x='ecoanxiety_status:Q',
+            y=alt.Y('density:Q', axis=None),
+            color=alt.Color('gender:N', scale=color_scale),
+            row='gender:N'
+        ).properties(
+            height=100,
+        )
+
+        with st.container():
+            st.altair_chart(base, use_container_width=True)
+
+    with col2:
+
+        st.markdown(
+            """
+            <div style="margin: 150px 150px; font-size: 23px;">
+            Among Leuphana students, women reported higher eco-anxiety levels on average.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # Determine Median in general and per Gender
+    female_data = main_df[main_df['gender'] == 'Female']['ecoanxiety_status']
+    male_data = main_df[main_df['gender'] == 'Male']['ecoanxiety_status']
+
+    # Calculate the median
+    female_median = female_data.median()
+    male_median = male_data.median()
+    all_median = main_df['ecoanxiety_status'].median()
+
+
+    # Define the CSS for the styled boxes
+    box_style = """
+        <style>
+            .rounded-box {
+                margin: 10px;
+                padding: 20px;
+                border-radius: 15px;
+                text-align: center;
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+                font-size: 22px;
+                font-weight: bold;
+                color: #ffffff; /* White text */
+            }
+            .female-box {
+                background-color: #9c3368; /* Dark red */
+            }
+            .male-box {
+                background-color: #0e7669; /* Forest green */
+            }
+            .overall-box {
+                background-color: #6e6e6e; /* Light grey */
+            }
+            .subtext {
+                font-size: 16px;
+                color: #ffffff; /* White text */
+                font-weight: normal;
+            }
+        </style>
+    """
+
+    # Render the CSS in Streamlit
+    st.markdown(box_style, unsafe_allow_html=True)
+
+    # Display the rounded boxes in the three columns
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown(f"""
+            <div class='rounded-box female-box'>
+                {female_median}/7.0
+                <div class='subtext'>Female Median</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"""
+            <div class='rounded-box male-box'>
+                {male_median}/7.0
+                <div class='subtext'>Male Median</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"""
+            <div class='rounded-box overall-box'>
+                {all_median}/7.0
+                <div class='subtext'>Leuphana Median</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+
+
+    # Count individuals with ecoanxiety_status >= 5
+    high_ecoanxiety_count = (main_df["ecoanxiety_status"] >= 5).sum()
+    others_count = len(main_df) - high_ecoanxiety_count
+
+
+    #OFFICIAL PIE CHART 
+    st.header("Who expressed high levels of Eco-Anxiety?")
+    st.markdown(
+        "<p style='font-size:18px; color:gray;'>We decided to take a closer look at individuals who expressed higher levels of eco-anxiety that we defined as equal or above to 5</p>",
+        unsafe_allow_html=True
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Create Pie Chart
+        fig, ax = plt.subplots()
+        labels = ["Ecoanxiety ≥ 5", "Others"]
+        sizes = [high_ecoanxiety_count, others_count]
+
+        # Custom colors (adjust as needed)
+        colors = ["#0b8b6a", "#5A5A63"]  # Dark grayish-blue for high ecoanxiety
+
+        ax.pie(sizes, labels=labels, autopct="%1.1f%%", startangle=90, colors=colors, textprops={"color": "white", "fontsize": 12, "weight": "bold"})
+        # Add a legend placed on the right
+        ax.legend(labels, title="Ecoanxiety Categories", loc="upper left", bbox_to_anchor=(1, 0.5), fontsize=10, frameon=False)
+        # Display in Streamlit
+        st.pyplot(fig)
+
+    with col2:
+
+        st.markdown(
+            """
+            <div style="margin: 150px 150px; font-size: 23px;">
+            Almost 30 percent of Leuphana students reported having high levels of eco-anxiety.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )       
+
+    #Determine frequency of males with ecoanxiety beyond 5 
+    female_datas = main_df[main_df['gender'] == 'Female']
+    male_datas = main_df[main_df['gender'] == 'Male']
+    # Count males with eco-anxiety ≥ 5
+    high_ecoanxiety_males = (male_datas["ecoanxiety_status"] >= 5).sum()
+    print(high_ecoanxiety_males)
+
+    # Count total males
+    total_males = len(male_datas)
+
+    # Calculate percentage
+    if total_males > 0:
+        percentage_males_high_ecoanxiety = round((high_ecoanxiety_males / total_males) * 100, 1)
+    else:
+        percentage_males_high_ecoanxiety = 0
+
+    #Count females with eco-anxiety > 5 (everything is weighted)
+
+    high_ecoanxiety_females = (female_datas["ecoanxiety_status"] >= 5).sum()
+
+    # Count total males
+    total_females = len(female_datas)
+
+    # Calculate percentage
+    if total_females > 0:
+        percentage_females_high_ecoanxiety = round((high_ecoanxiety_females / total_females) * 100, 1)
+    else:
+        percentage_females_high_ecoanxiety = 0
+
+    #Count age 
+    #Seek equilibrium of age and then check the most common age pattern 
+    low_age=main_df[main_df['age']=='18-24']
+    medium_age=main_df[main_df['age']=='25-34']
+    high_age=main_df[main_df['age']=='35-44']
+
+    high_ecoanxiety_lowage = (low_age["ecoanxiety_status"] >= 5).sum()
+    high_ecoanxiety_mediumage = (medium_age["ecoanxiety_status"] >= 5).sum()
+    high_ecoanxiety_highage = (high_age["ecoanxiety_status"] >= 5).sum()
+
+    # Count total males
+    total_lowage = len(low_age)
+    total_mediumage = len(medium_age)
+    total_highage = len(high_age)
+
+    # Calculate percentage of age
+
+    percentage_lowage=high_ecoanxiety_lowage/total_lowage*100 if total_lowage>0 else 0
+    percentage_highage=high_ecoanxiety_highage/total_highage*100 if total_highage>0 else 0
+    percentage_mediumage=high_ecoanxiety_mediumage/total_mediumage*100 if total_mediumage>0 else 0
+
+    largest_value_age = max(percentage_highage, percentage_mediumage, percentage_lowage)
+
+    if largest_value_age == percentage_highage:
+        largest_category = "35-44"
+    elif largest_value_age == percentage_mediumage:
+        largest_category = "25-34"
+    else:
+        largest_category = "18-24"
+
+
+    #Check distribution (scatterplot) specifically of those who are experiencing eco-anxiety 
+    #Questions: What improves the eco-anxiety levels? (less worse)
+
+    #Eco-anxiety of those who are closer to nature? (above or equal to 5) (median)
+    #Eco-anxiety of those who have more relationship to nature (above or equal to 5) (median)
+
+    st.header("Most common profile experiencing Eco-Anxiety?")
+
+    st.markdown(
+        "<p style='font-size:18px; color:gray;'>We decided to take a closer look at individuals who expressed higher levels of eco-anxiety that we defined as equal or above to 5</p>",
+        unsafe_allow_html=True
+    )
+
+    # Function to create a rounded box with color
+    def styled_box(value, label, color):
+        st.markdown(
+            f"""
+            <div style="
+                background-color: {color};
+                padding: 20px;
+                border-radius: 15px;
+                text-align: center;
+                color: white;
+                font-size: 24px;
+                font-weight: bold;">
+                {value}
+            </div>
+            <p style="text-align: center; font-size: 18px;">{label}</p>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # Define columns
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        styled_box(percentage_females_high_ecoanxiety, "Frequency Females %", "#9c3368")  # Custom Red
+
+    with col2:
+        styled_box(percentage_males_high_ecoanxiety, "Frequency Males %", "#0b8b6a")  # Custom Green
+
+    with col3:
+        styled_box(largest_category, "Most frequent age group", "#7f8c8d")  # Gray
+
+
+    #SECTION ABOTU CORRELATION BETWEEN ECO-ANXIETY AND PROXIMITY TO NATURE
+    st.header("Anxiety, sustainability and acces to nature - correlated?")
+    st.write("Only people with anxiety above 5.")
+
+    col1, col2 = st.columns(2)
+
+    filtered_anxious = main_df[main_df["ecoanxiety_status"] >= 5]
+
+    param3, param4 = filtered_anxious['natural_acc'], filtered_anxious['ecoanxiety_status']
+    valid_data = filtered_anxious[[param3.name, param4.name]].replace([np.inf, -np.inf], np.nan).dropna()
+    param3, param4 = valid_data[param3.name], valid_data[param4.name]
+
+    # Calculate Pearson correlation
+    correlation, p_value = stats.pearsonr(param3, param4)
+
+    # Scatterplot with Regression Line
+    fig, ax = plt.subplots()
+
+    sns.scatterplot(x=param3, y=param4, ax=ax, color='#0b8b6a', alpha=0.5)
+    sns.regplot(x=param3, y=param4, ax=ax, scatter=False, color='red')
+    sns.kdeplot(x=param3, y=param4, ax=ax, cmap="Greens", fill=True, alpha=0.3)
+
+    ax.set_xlabel('Accessibility to Natural Spaces')
+    ax.set_ylabel('EcoAnxiety Levels')
+    ax.set_title(f"Correlation: {correlation:.2f}")
+    ax.grid(False)  # Remove grid
+
+    with col1:
+        st.subheader("Access to Natural Spaces and Eco-Anxiety")
+        st.pyplot(fig)
+        st.write(f"**Pearson Correlation Coefficient:** {correlation:.2f}")
+        st.write(f"**P-value:** {p_value:.4f}")
+
+        st.markdown(
+            """
+            <div style="margin: 10px 10px; font-size: 23px;">
+            Among highly eco-anxious, access to natural spaces correlates negatively with anxiety levels.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )      
+
+
+    with col2: 
+    #SECTION SUSTAINABLE PRACTICES AND ECO-ANXIETY
+        st.subheader("Frequency of Sustainable Practices and Eco-anxiety")
+
+        param5, param4 = filtered_anxious['sustainable_practices'], filtered_anxious['ecoanxiety_status']
+        valid_data = filtered_anxious[[param5.name, param4.name]].replace([np.inf, -np.inf], np.nan).dropna()
+        param5, param4 = valid_data[param5.name], valid_data[param4.name]
+
+        # Calculate Pearson correlation
+        correlation, p_value = stats.pearsonr(param5, param4)
+
+        # Scatterplot with Regression Line
+        fig, ax = plt.subplots()
+
+        sns.scatterplot(x=param5, y=param4, ax=ax, color='#0b8b6a', alpha=0.5)
+        sns.regplot(x=param5, y=param4, ax=ax, scatter=False, color='red')
+        sns.kdeplot(x=param5, y=param4, ax=ax, cmap="Greens", fill=True, alpha=0.3)
+
+        ax.set_xlabel('Sustainable Practices')
+        ax.set_ylabel('EcoAnxiety Self-Reported Levels')
+        ax.set_title(f"Correlation: {correlation:.2f}")
+        ax.grid(False)  # Remove grid
+
+        st.pyplot(fig)
+
+        st.write(f"**Pearson Correlation Coefficient:** {correlation:.2f}")
+        st.write(f"**P-value:** {p_value:.4f}")
+
+        st.markdown(
+            """
+            <div style="margin: 10px 10px; font-size: 23px;">
+            Among highly eco-anxious, sustainable practices correlate slightly positively with anxiety levels.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )      
+
+    # INTERACTIVE SECTION FEATURE 
+    st.title("What about you?")
+    st.markdown(
+        "<p style='font-size:18px; color:gray;'>Are you as sustainable as other Leuphana students? Do you spend enough time in nature? Check it out now!</p>",
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        "<p style='font-size:12px; color:gray;'>All data is collected anonymously and has purely scientific purposes.</p>",
+        unsafe_allow_html=True
+    )
+
+    # Read the data from the file path but don't write back to it
+    input_df = pd.read_excel(path)
+
+    if "show_graph" not in st.session_state:
+        st.session_state.show_graph = False
+        st.session_state.hide_time = None
+
+    def styled_radio(label, options, key):
+        return st.radio(label, options, index=options.index(5), horizontal=True)
+
+    ecoanxiety_input = styled_radio("Your Eco-Anxiety Level:", list(range(1, 8)), "ecoanxiety_status")
+    sustainable_practices_input = styled_radio("Your Sustainable Practices Score:", list(range(1, 8)), "sustainable_practices")
+    activities_nature_input = styled_radio("Your Activities in Nature:", list(range(1, 8)), "activities_nature")
+
+    def calculate_percentiles(user_value, dataset):
+        if dataset.empty:
+            return 0.0, 100.0
+        below = np.sum(dataset < user_value) / len(dataset) * 100
+        above = 100 - below
+        return below, above
+
+    # Submission and saving data (but not rewriting original file)
+    if st.button("Check out now!"):
+        new_entry = pd.DataFrame(
+            {
+                "ecoanxiety_status": [ecoanxiety_input],
+                "sustainable_practices": [sustainable_practices_input],
+                "activities_nature": [activities_nature_input],
+            }
+        )
+        
+        # Append new entry to the dataset (but not overwrite original path)
+        df = pd.concat([input_df, new_entry], ignore_index=True)
+
+        # Instead of writing back to original file, use a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_file:
+            temp_path = temp_file.name  # Get the temp file path
+            df.to_excel(temp_path, index=False, engine="openpyxl")
+
+        st.success("Thank you for taking part! ✅")
+
+        st.session_state.show_graph = True
+        st.session_state.hide_time = time.time() + 15  
+
+    # Function for ridgeline plot with altair
+    def ridgeline_plot(data, user_value, category_name, color):
+        """Generates a ridgeline plot with a density curve and user position dot."""
+
+        column_name = data.columns[0]  # Get the first (only) column name
+
+        base = (
+            alt.Chart(data)
+            .transform_density(
+                density=column_name,  # Use the correct column
+                as_=[column_name, "Density"]
+            )
+            .mark_area(opacity=0.5, color=color)
+            .encode(
+                x=alt.X(column_name, title=category_name, scale=alt.Scale(zero=False)),
+                y=alt.Y("Density:Q", axis=None),
+            )
+        )
+
+        # Added user position as a black dot
+        user_point = pd.DataFrame({column_name: [user_value]})
+
+        point = (
+            alt.Chart(user_point)
+            .mark_circle(size=100, color="black")
+            .encode(x=alt.X(column_name), y=alt.value(0))  # Keep y at zero
+        )
+
+        return base + point 
+
+    if st.session_state.show_graph:
+        st.subheader("Your Position in the Distribution!")
+
+        # Convert the dataset for Altair
+        eco_data = pd.DataFrame({"Eco-anxiety Levels": input_df["ecoanxiety_status"]})
+        sust_data = pd.DataFrame({"Frequency of Sustainable Activities": input_df["sustainable_practices"]})
+        nature_data = pd.DataFrame({"Frequency of Activities in Nature": input_df["activities_nature"]})
+
+        # Initializing variables
+        eco_below, eco_above = None, None
+        sust_below, sust_above = None, None
+        act_below, act_above = None, None
+
+        # Compute percentiles
+        eco_below, eco_above = calculate_percentiles(ecoanxiety_input, input_df["ecoanxiety_status"])
+        sust_below, sust_above = calculate_percentiles(sustainable_practices_input, input_df["sustainable_practices"])
+        act_below, act_above = calculate_percentiles(activities_nature_input, input_df["activities_nature"])
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.markdown(f"### Eco-Anxiety Level🌱\n📊 {eco_below:.2f}% of people have a lower score, {eco_above:.2f}% have a higher score.")
+        
+            anxiety_chart=ridgeline_plot(eco_data, ecoanxiety_input, "Eco-Anxiety Level", "#9c3368")  # Red one 
+            st.altair_chart(anxiety_chart, use_container_width=True) 
+
+        with col2:
+            st.markdown(f"### Sustainable Practices♻️ \n📊 {sust_below:.2f}% of people have a lower score, {sust_above:.2f}% have a higher score.")
+        
+            sustainability_chart=ridgeline_plot(sust_data, sustainable_practices_input, "Sustainable Practices", "#0b8b6a")  # Green one
+            st.altair_chart(sustainability_chart, use_container_width=True) 
+
+        with col3:
+            st.markdown(f"###  Activities in Nature🌿\n📊 {act_below:.2f}% of people have a lower score, {act_above:.2f}% have a higher score.")
+        
+            nature_chart=ridgeline_plot(nature_data, activities_nature_input, "Activities in Nature", "gray")  # Gray one
+            st.altair_chart(nature_chart, use_container_width=True) 
+
+
+    # Hide graph after some time
+    if st.session_state.show_graph and time.time() > st.session_state.hide_time:
+        st.session_state.show_graph = False
+        st.session_state.hide_time = None
+        st.rerun()  # ✅ Corrected from experimental_rerun()
+
+if selected == "References":
+    st.title("See our code and references od GitHub")
+    qr = Image.open("QR.png")
+    st.image(qr, width=500)
